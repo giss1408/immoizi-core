@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/property.dart';
+import '../models/rental_type.dart';
 import '../theme.dart';
 
 class PropertyFilters {
@@ -9,7 +10,15 @@ class PropertyFilters {
       this.priceRange = const RangeValues(0, 5000000),
       this.minRooms = 0,
       this.minSurface = 0,
-      this.categories = const {}});
+      this.categories = const {},
+      this.rentalType});
+
+  /// Full budget range: monthly rents, or nightly prices for short stays.
+  static const monthlyBudgetMax = 5000000.0;
+  static const nightlyBudgetMax = 500000.0;
+
+  static double budgetMaxFor(RentalType? type) =>
+      type == RentalType.shortTerm ? nightlyBudgetMax : monthlyBudgetMax;
 
   final String location;
   final RangeValues priceRange;
@@ -17,21 +26,46 @@ class PropertyFilters {
   final int minSurface;
   final Set<String> categories;
 
+  /// Null means every rental duration.
+  final RentalType? rentalType;
+
+  PropertyFilters copyWith(
+          {RentalType? rentalType, bool clearRentalType = false}) =>
+      PropertyFilters(
+        location: location,
+        // The budget unit changes with the rental type, so reset it.
+        priceRange: RangeValues(
+            0,
+            budgetMaxFor(
+                clearRentalType ? null : rentalType ?? this.rentalType)),
+        minRooms: minRooms,
+        minSurface: minSurface,
+        categories: categories,
+        rentalType: clearRentalType ? null : rentalType ?? this.rentalType,
+      );
+
   int get activeCount =>
       (location.trim().isNotEmpty ? 1 : 0) +
       (priceRange.start > 0 ? 1 : 0) +
-      (priceRange.end < 5000000 ? 1 : 0) +
+      (priceRange.end < budgetMaxFor(rentalType) ? 1 : 0) +
       (minRooms > 0 ? 1 : 0) +
       (minSurface > 0 ? 1 : 0) +
-      (categories.isNotEmpty ? 1 : 0);
+      (categories.isNotEmpty ? 1 : 0) +
+      (rentalType != null ? 1 : 0);
 
   bool matches(Property property) {
     final query = location.trim().toLowerCase();
+    // The budget is monthly unless short stays are selected, when it is per
+    // night; nightly prices are never compared with a monthly budget.
+    final budgetApplies =
+        rentalType != null || property.rentalType == RentalType.longTerm;
     return (query.isEmpty ||
             property.city.toLowerCase().contains(query) ||
             property.district.toLowerCase().contains(query)) &&
-        property.price >= priceRange.start &&
-        property.price <= priceRange.end &&
+        (rentalType == null || property.rentalType == rentalType) &&
+        (!budgetApplies ||
+            (property.price >= priceRange.start &&
+                property.price <= priceRange.end)) &&
         property.rooms >= minRooms &&
         property.surface >= minSurface &&
         (categories.isEmpty || categories.contains(property.category));
@@ -59,10 +93,14 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
   late int minRooms = widget.initial.minRooms;
   late int minSurface = widget.initial.minSurface;
   late Set<String> categories = {...widget.initial.categories};
+  late RentalType? rentalType = widget.initial.rentalType;
+
+  double get budgetMax => PropertyFilters.budgetMaxFor(rentalType);
 
   void reset() => setState(() {
         locationController.clear();
-        priceRange = const RangeValues(0, 5000000);
+        rentalType = null;
+        priceRange = RangeValues(0, budgetMax);
         minRooms = 0;
         minSurface = 0;
         categories = {};
@@ -92,6 +130,16 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
               Text(widget.subtitle,
                   style: const TextStyle(color: Colors.black54)),
               const SizedBox(height: 20),
+              const Text('Durée de location',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+              const SizedBox(height: 8),
+              RentalTypeChips(
+                  value: rentalType,
+                  onChanged: (value) => setState(() {
+                        rentalType = value;
+                        priceRange = RangeValues(0, budgetMax);
+                      })),
+              const SizedBox(height: 16),
               TextField(
                   controller: locationController,
                   decoration: const InputDecoration(
@@ -100,12 +148,13 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
                       prefixIcon: Icon(Icons.location_on_outlined))),
               const SizedBox(height: 14),
               Text(
-                  'Budget mensuel: ${priceRange.start.round()} - ${priceRange.end.round()} FCFA',
+                  '${rentalType == RentalType.shortTerm ? 'Budget par nuit' : 'Budget mensuel'} : '
+                  '${formatFcfa(priceRange.start.round())} - ${formatFcfa(priceRange.end.round())}',
                   style: const TextStyle(fontWeight: FontWeight.w700)),
               RangeSlider(
                   values: priceRange,
                   min: 0,
-                  max: 5000000,
+                  max: budgetMax,
                   divisions: 100,
                   activeColor: IvoryColors.orange,
                   labels: RangeLabels('${priceRange.start.round()}',
@@ -157,7 +206,8 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
                               priceRange: priceRange,
                               minRooms: minRooms,
                               minSurface: minSurface,
-                              categories: categories)),
+                              categories: categories,
+                              rentalType: rentalType)),
                       icon: const Icon(Icons.check),
                       label: const Text('Appliquer les filtres'))),
             ])));

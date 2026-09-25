@@ -55,6 +55,24 @@ class PropertyListingCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                    if (property.isShortTerm)
+                      const Positioned(
+                        top: 48,
+                        left: 12,
+                        child: _Overlay(
+                          color: IvoryColors.green,
+                          child: Row(mainAxisSize: MainAxisSize.min, children: [
+                            Icon(Icons.nights_stay,
+                                size: 14, color: Colors.white),
+                            SizedBox(width: 6),
+                            Text('Courte durée',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white)),
+                          ]),
+                        ),
+                      ),
                     Positioned(
                       top: 12,
                       left: 12,
@@ -92,7 +110,7 @@ class PropertyListingCard extends StatelessWidget {
                       bottom: 12,
                       child: _Overlay(
                         color: IvoryColors.orange,
-                        child: Text(formatFcfa(property.price),
+                        child: Text(property.priceLabel,
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w900,
@@ -143,6 +161,9 @@ class PropertyListingCard extends StatelessWidget {
                             Icons.bed_outlined, '${property.rooms} pièces'),
                         _Feature(Icons.square_foot, '${property.surface} m²'),
                         _Feature(Icons.sell_outlined, property.category),
+                        if (property.weeklyPriceLabel != null)
+                          _Feature(
+                              Icons.date_range, property.weeklyPriceLabel!),
                         if (property.isTestData) const TestDataBadge(),
                       ],
                     ),

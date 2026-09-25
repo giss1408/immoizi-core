@@ -32,6 +32,10 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
   /// Whether the dashboard can only be loaded by a signed-in user.
   bool get requiresLogin;
 
+  /// Extra server-side filters (e.g. `rentalType`), sent with `$search`.
+  /// Null values mean "no filter".
+  Map<String, Object?> get extraQueryVariables => const {};
+
   D parseDashboard(Map<String, dynamic> json);
   D demoDashboard();
   Iterable<AppNotification> notificationsOf(D dashboard);
@@ -169,7 +173,10 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
         endpoint.text.trim(),
         token.text.trim(),
         signedIn ? dashboardQuery : (signedOutQuery ?? dashboardQuery),
-        variables: {'search': activeSearch.isEmpty ? null : activeSearch},
+        variables: {
+          'search': activeSearch.isEmpty ? null : activeSearch,
+          ...extraQueryVariables,
+        },
       );
       if (!mounted || generation != _generation) return;
       setState(() {
@@ -182,9 +189,11 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
         await _persistSession();
       }
       if (signedIn) _alertNewNotifications();
-      // A search result is partial; caching it would hide the rest of the
-      // portfolio on the next offline start.
-      if (activeSearch.isEmpty) {
+      // A search or filtered result is partial; caching it would hide the
+      // rest of the portfolio on the next offline start.
+      final filtered = activeSearch.isNotEmpty ||
+          extraQueryVariables.values.any((value) => value != null);
+      if (!filtered) {
         final savedAt = await cache.save(data);
         if (mounted) setState(() => lastSynced = savedAt);
       }

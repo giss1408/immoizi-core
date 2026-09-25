@@ -13,6 +13,7 @@ export 'src/media/video.dart';
 export 'src/models/interest_status.dart';
 export 'src/models/listing_status.dart';
 export 'src/models/property.dart';
+export 'src/models/rental_type.dart';
 export 'src/notifications/app_notification.dart';
 export 'src/notifications/system_notifications.dart';
 export 'src/session/dashboard_session.dart';

@@ -1,4 +1,6 @@
 import '../api/json.dart';
+import '../theme.dart';
+import 'rental_type.dart';
 
 class Property {
   Property(
@@ -18,6 +20,8 @@ class Property {
     this.galleryImageSlots = const [],
     this.hasVideo = false,
     this.videoUrl,
+    this.rentalType = RentalType.longTerm,
+    this.weeklyPrice,
   });
 
   final String? id;
@@ -36,6 +40,20 @@ class Property {
   final List<String> galleryImageSlots;
   final bool hasVideo;
   final String? videoUrl;
+
+  /// Monthly rent, or short stays priced per night ([price]) and week.
+  final RentalType rentalType;
+  final int? weeklyPrice;
+
+  bool get isShortTerm => rentalType == RentalType.shortTerm;
+
+  /// "340 000 FCFA / mois" or "35 000 FCFA / nuit".
+  String get priceLabel => '${formatFcfa(price)} / ${rentalType.priceUnit}';
+
+  /// "210 000 FCFA / semaine" for short stays with a weekly rate.
+  String? get weeklyPriceLabel => isShortTerm && weeklyPrice != null
+      ? '${formatFcfa(weeklyPrice!)} / semaine'
+      : null;
 
   Property copyWith({
     int? price,
@@ -65,6 +83,8 @@ class Property {
       galleryImageSlots: galleryImageSlots ?? this.galleryImageSlots,
       hasVideo: clearVideo ? false : hasVideo ?? this.hasVideo,
       videoUrl: clearVideo ? null : videoUrl ?? this.videoUrl,
+      rentalType: rentalType,
+      weeklyPrice: weeklyPrice,
     );
   }
 
@@ -90,5 +110,7 @@ class Property {
                 .cast<String>(),
         hasVideo: json['hasVideo'] as bool? ?? false,
         videoUrl: json['videoUrl'] as String?,
+        rentalType: RentalType.fromApi(json['rentalType']),
+        weeklyPrice: json['weeklyPrice'] as int?,
       );
 }
