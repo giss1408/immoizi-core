@@ -8,10 +8,12 @@
 /// ```
 ///
 /// Demo credentials are empty unless provided, so none ship in release builds.
+/// For a local backend use `IMMOIZI_ENDPOINT=http://127.0.0.1:8000/graphql`
+/// (with `adb reverse tcp:8000 tcp:8000` on a USB-connected phone).
 class AppConfig {
   static const endpoint = String.fromEnvironment(
     'IMMOIZI_ENDPOINT',
-    defaultValue: 'http://127.0.0.1:8000/graphql',
+    defaultValue: 'https://immoizi-be.onrender.com/graphql',
   );
 
   static const demoUsername = String.fromEnvironment('IMMOIZI_DEMO_USERNAME');

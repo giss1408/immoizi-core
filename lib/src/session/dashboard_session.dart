@@ -22,6 +22,11 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
   /// The GraphQL query that loads the whole dashboard. Takes `$search`.
   String get dashboardQuery;
 
+  /// Query used while signed out, limited to public fields: the backend
+  /// rejects the whole response when a query touches a protected field.
+  /// Null when the dashboard [requiresLogin].
+  String? get signedOutQuery => null;
+
   /// Whether the dashboard can only be loaded by a signed-in user.
   bool get requiresLogin;
 
@@ -42,6 +47,10 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
   bool loading = false;
   bool loggingIn = false;
   bool connected = false;
+
+  /// The last load reached the backend (signed in or not), so the screen
+  /// shows live data rather than demo data.
+  bool online = false;
   bool hasData = false;
   DateTime? lastSynced;
   String? error;
@@ -129,6 +138,7 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
     setState(() {
       dashboard = demoDashboard();
       connected = false;
+      online = false;
       hasData = false;
       lastSynced = null;
       loading = false;
@@ -151,13 +161,14 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
       final data = await client.query(
         endpoint.text.trim(),
         token.text.trim(),
-        dashboardQuery,
+        signedIn ? dashboardQuery : (signedOutQuery ?? dashboardQuery),
         variables: {'search': activeSearch.isEmpty ? null : activeSearch},
       );
       if (!mounted || generation != _generation) return;
       setState(() {
         dashboard = parseDashboard(data);
         connected = signedIn;
+        online = true;
         hasData = true;
       });
       if (signedIn && token.text.trim() != _persistedToken) {
@@ -176,6 +187,7 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
       } else {
         setState(() {
           connected = false;
+          online = false;
           error = exception.userMessage;
         });
       }
@@ -184,6 +196,7 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
       final message = describeError(exception);
       setState(() {
         connected = false;
+        online = false;
         if (!hasData) {
           dashboard = demoDashboard();
           error = '$message Mode démonstration activé.';

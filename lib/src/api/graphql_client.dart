@@ -43,7 +43,8 @@ class GraphQLClient {
   GraphQLClient({http.Client? httpClient, this.timeout = _defaultTimeout})
       : _http = httpClient ?? http.Client();
 
-  static const _defaultTimeout = Duration(seconds: 20);
+  // Render's free plan sleeps when idle; waking up can take close to a minute.
+  static const _defaultTimeout = Duration(seconds: 60);
 
   final http.Client _http;
   final Duration timeout;

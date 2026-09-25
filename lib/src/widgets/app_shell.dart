@@ -11,6 +11,7 @@ class AppHeader extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     this.connected = false,
+    this.online = false,
     this.connectedLabel = '',
     this.loading = false,
     this.onRefresh,
@@ -23,6 +24,9 @@ class AppHeader extends StatelessWidget {
   final String subtitle;
   final IconData icon;
   final bool connected;
+
+  /// Live data without being signed in (visitor browsing public listings).
+  final bool online;
   final String connectedLabel;
   final bool loading;
   final VoidCallback? onRefresh;
@@ -115,7 +119,10 @@ class AppHeader extends StatelessWidget {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: ConnectionStatusPill(
-                    connected: connected, label: connectedLabel, onDark: true),
+                    connected: connected,
+                    online: online,
+                    label: connectedLabel,
+                    onDark: true),
               ),
             ),
             if (bottom != null)
@@ -157,10 +164,12 @@ class ConnectionStatusPill extends StatelessWidget {
   const ConnectionStatusPill(
       {required this.connected,
       required this.label,
+      this.online = false,
       this.onDark = false,
       super.key});
 
   final bool connected;
+  final bool online;
   final String label;
 
   /// Use light colours when placed on the green header or drawer.
@@ -168,12 +177,12 @@ class ConnectionStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dotColor = connected
+    final live = connected || online;
+    final dotColor = live
         ? (onDark ? const Color(0xFF7FD6A4) : IvoryColors.green)
         : (onDark ? IvoryColors.orange : Colors.black38);
-    final textColor = onDark
-        ? Colors.white
-        : (connected ? IvoryColors.green : Colors.black54);
+    final textColor =
+        onDark ? Colors.white : (live ? IvoryColors.green : Colors.black54);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -191,7 +200,11 @@ class ConnectionStatusPill extends StatelessWidget {
           const SizedBox(width: 6),
           Flexible(
             child: Text(
-              connected ? 'Connecté — $label' : 'Mode démonstration',
+              connected
+                  ? 'Connecté — $label'
+                  : online
+                      ? 'Visiteur — en ligne'
+                      : 'Mode démonstration',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
