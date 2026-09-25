@@ -10,6 +10,7 @@ export 'src/config/app_config.dart';
 export 'src/filters/property_filters.dart';
 export 'src/media/image_viewer.dart';
 export 'src/media/video.dart';
+export 'src/models/listing_status.dart';
 export 'src/models/property.dart';
 export 'src/session/dashboard_session.dart';
 export 'src/session/session_store.dart';
