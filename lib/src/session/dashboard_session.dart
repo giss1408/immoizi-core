@@ -6,6 +6,8 @@ import '../api/graphql_client.dart';
 import '../api/notifications_poll.dart';
 import '../cache/dashboard_cache.dart';
 import '../config/app_config.dart';
+import '../notifications/app_notification.dart';
+import '../notifications/system_notifications.dart';
 import 'session_store.dart';
 
 /// Shared session, loading and polling logic for the apps' home pages.
@@ -32,7 +34,7 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
 
   D parseDashboard(Map<String, dynamic> json);
   D demoDashboard();
-  Iterable<({String id, bool isRead})> notificationKeys(D dashboard);
+  Iterable<AppNotification> notificationsOf(D dashboard);
 
   static const pollInterval = Duration(seconds: 15);
   static const searchDebounceDelay = Duration(milliseconds: 350);
@@ -61,6 +63,10 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
   int _generation = 0;
   bool _polling = false;
   String? _persistedToken;
+
+  /// Notification ids already known this session; null until the first
+  /// signed-in load, so opening the app does not replay old alerts.
+  Set<String>? _knownNotificationIds;
 
   bool get signedIn => token.text.trim().isNotEmpty;
 
@@ -135,6 +141,7 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
     token.clear();
     password.clear();
     _persistedToken = null;
+    _knownNotificationIds = null;
     setState(() {
       dashboard = demoDashboard();
       connected = false;
@@ -174,6 +181,7 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
       if (signedIn && token.text.trim() != _persistedToken) {
         await _persistSession();
       }
+      if (signedIn) _alertNewNotifications();
       // A search result is partial; caching it would hide the rest of the
       // portfolio on the next offline start.
       if (activeSearch.isEmpty) {
@@ -236,7 +244,8 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
                     id: '${item['id'] ?? ''}',
                     isRead: item['isRead'] == true,
                   )));
-      final local = notificationsSignature(notificationKeys(dashboard));
+      final local = notificationsSignature(notificationsOf(dashboard)
+          .map((item) => (id: item.id, isRead: item.isRead)));
       if (!connected) setState(() => connected = true);
       if (remote != local) await load();
     } on AuthException catch (exception) {
@@ -249,6 +258,35 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
       // A failed background poll is retried on the next tick.
     } finally {
       _polling = false;
+    }
+  }
+
+  /// Raises a system notification for each unread notification that
+  /// appeared since the previous load.
+  void _alertNewNotifications() {
+    final current = notificationsOf(dashboard).toList();
+    final known = _knownNotificationIds;
+    _knownNotificationIds = {for (final item in current) item.id};
+    if (known == null) {
+      SystemNotifications.initialize();
+      return;
+    }
+    for (final item in current) {
+      if (!item.isRead && !known.contains(item.id)) {
+        SystemNotifications.show(item);
+      }
+    }
+  }
+
+  /// Marks a notification as read on the backend, then refreshes.
+  Future<void> markNotificationRead(String notificationId) async {
+    try {
+      await client.query(
+          endpoint.text.trim(), token.text.trim(), markNotificationReadMutation,
+          variables: {'notificationId': notificationId});
+      if (mounted) await load();
+    } catch (_) {
+      // Not critical: the notification simply stays unread.
     }
   }
 

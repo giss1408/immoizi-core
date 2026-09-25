@@ -11,6 +11,7 @@ class InterestChatPage extends StatefulWidget {
       required this.endpoint,
       required this.token,
       required this.isManager,
+      this.initialMessageType = 'message',
       super.key});
 
   final String interestRequestId;
@@ -21,6 +22,9 @@ class InterestChatPage extends StatefulWidget {
   /// Managers can propose a visit date; applicants can only reply to one.
   final bool isManager;
 
+  /// E.g. 'visit_proposal' to open the chat ready to propose a visit.
+  final String initialMessageType;
+
   @override
   State<InterestChatPage> createState() => _InterestChatPageState();
 }
@@ -28,7 +32,7 @@ class InterestChatPage extends StatefulWidget {
 class _InterestChatPageState extends State<InterestChatPage> {
   final messageController = TextEditingController();
   List<InterestMessageItem> messages = [];
-  String messageType = 'message';
+  late String messageType = widget.initialMessageType;
   DateTime? proposedVisitAt;
   bool loading = true;
   bool sending = false;
