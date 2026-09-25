@@ -1,0 +1,188 @@
+import 'package:flutter/material.dart';
+
+import '../models/property.dart';
+import '../theme.dart';
+
+class PropertyFilters {
+  const PropertyFilters(
+      {this.location = '',
+      this.priceRange = const RangeValues(0, 5000000),
+      this.minRooms = 0,
+      this.minSurface = 0,
+      this.categories = const {}});
+
+  final String location;
+  final RangeValues priceRange;
+  final int minRooms;
+  final int minSurface;
+  final Set<String> categories;
+
+  int get activeCount =>
+      (location.trim().isNotEmpty ? 1 : 0) +
+      (priceRange.start > 0 ? 1 : 0) +
+      (priceRange.end < 5000000 ? 1 : 0) +
+      (minRooms > 0 ? 1 : 0) +
+      (minSurface > 0 ? 1 : 0) +
+      (categories.isNotEmpty ? 1 : 0);
+
+  bool matches(Property property) {
+    final query = location.trim().toLowerCase();
+    return (query.isEmpty ||
+            property.city.toLowerCase().contains(query) ||
+            property.district.toLowerCase().contains(query)) &&
+        property.price >= priceRange.start &&
+        property.price <= priceRange.end &&
+        property.rooms >= minRooms &&
+        property.surface >= minSurface &&
+        (categories.isEmpty || categories.contains(property.category));
+  }
+}
+
+class PropertyFilterSheet extends StatefulWidget {
+  const PropertyFilterSheet(
+      {required this.initial,
+      required this.categories,
+      this.subtitle = 'Affinez les biens disponibles.',
+      super.key});
+  final PropertyFilters initial;
+  final List<String> categories;
+  final String subtitle;
+
+  @override
+  State<PropertyFilterSheet> createState() => _PropertyFilterSheetState();
+}
+
+class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
+  late final TextEditingController locationController =
+      TextEditingController(text: widget.initial.location);
+  late RangeValues priceRange = widget.initial.priceRange;
+  late int minRooms = widget.initial.minRooms;
+  late int minSurface = widget.initial.minSurface;
+  late Set<String> categories = {...widget.initial.categories};
+
+  void reset() => setState(() {
+        locationController.clear();
+        priceRange = const RangeValues(0, 5000000);
+        minRooms = 0;
+        minSurface = 0;
+        categories = {};
+      });
+
+  @override
+  void dispose() {
+    locationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+        child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text('Filtres',
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w900)),
+                TextButton(onPressed: reset, child: const Text('Réinitialiser'))
+              ]),
+              Text(widget.subtitle,
+                  style: const TextStyle(color: Colors.black54)),
+              const SizedBox(height: 20),
+              TextField(
+                  controller: locationController,
+                  decoration: const InputDecoration(
+                      labelText: 'Localisation',
+                      hintText: 'Ville ou quartier',
+                      prefixIcon: Icon(Icons.location_on_outlined))),
+              const SizedBox(height: 14),
+              Text(
+                  'Budget mensuel: ${priceRange.start.round()} - ${priceRange.end.round()} FCFA',
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              RangeSlider(
+                  values: priceRange,
+                  min: 0,
+                  max: 5000000,
+                  divisions: 100,
+                  activeColor: IvoryColors.orange,
+                  labels: RangeLabels('${priceRange.start.round()}',
+                      '${priceRange.end.round()}'),
+                  onChanged: (value) => setState(() => priceRange = value)),
+              const SizedBox(height: 12),
+              _FilterStepper(
+                  label: 'Pièces minimum',
+                  value: minRooms,
+                  onChanged: (value) => setState(() => minRooms = value)),
+              _FilterStepper(
+                  label: 'Surface minimum',
+                  suffix: ' m²',
+                  value: minSurface,
+                  step: 10,
+                  onChanged: (value) => setState(() => minSurface = value)),
+              if (widget.categories.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                const Text('Types de biens',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: widget.categories.map((category) {
+                    return FilterChip(
+                      label: Text(category),
+                      selected: categories.contains(category),
+                      selectedColor: IvoryColors.orange.withOpacity(.2),
+                      onSelected: (selected) => setState(() {
+                        if (selected) {
+                          categories.add(category);
+                        } else {
+                          categories.remove(category);
+                        }
+                      }),
+                    );
+                  }).toList(),
+                ),
+              ],
+              const SizedBox(height: 22),
+              SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                      onPressed: () => Navigator.pop(
+                          context,
+                          PropertyFilters(
+                              location: locationController.text,
+                              priceRange: priceRange,
+                              minRooms: minRooms,
+                              minSurface: minSurface,
+                              categories: categories)),
+                      icon: const Icon(Icons.check),
+                      label: const Text('Appliquer les filtres'))),
+            ])));
+  }
+}
+
+class _FilterStepper extends StatelessWidget {
+  const _FilterStepper(
+      {required this.label,
+      required this.value,
+      required this.onChanged,
+      this.step = 1,
+      this.suffix = ''});
+  final String label, suffix;
+  final int value, step;
+  final ValueChanged<int> onChanged;
+  @override
+  Widget build(BuildContext context) => Row(children: [
+        Expanded(child: Text('$label: $value$suffix')),
+        IconButton(
+            onPressed: value > 0 ? () => onChanged(value - step) : null,
+            icon: const Icon(Icons.remove_circle_outline)),
+        Text('$value'),
+        IconButton(
+            onPressed: () => onChanged(value + step),
+            icon: const Icon(Icons.add_circle_outline))
+      ]);
+}
