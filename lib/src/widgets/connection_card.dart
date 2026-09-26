@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import '../i18n/tr.dart';
 
 class ConnectionCard extends StatefulWidget {
   const ConnectionCard({
@@ -14,7 +15,7 @@ class ConnectionCard extends StatefulWidget {
     required this.onPressed,
     required this.onLogin,
     required this.onLogout,
-    this.loadLabel = 'Synchroniser',
+    this.loadLabel,
     super.key,
   });
 
@@ -28,7 +29,9 @@ class ConnectionCard extends StatefulWidget {
   final VoidCallback onPressed;
   final VoidCallback onLogin;
   final VoidCallback onLogout;
-  final String loadLabel;
+
+  /// Null shows the default label.
+  final String? loadLabel;
 
   @override
   State<ConnectionCard> createState() => _ConnectionCardState();
@@ -70,13 +73,14 @@ class _ConnectionCardState extends State<ConnectionCard> {
                   Expanded(
                     child: Text(
                       widget.connected
-                          ? 'Connect\u00e9 en tant que ${widget.username.text.trim()}'
-                          : 'Connexion au backend',
+                          ? tr('Connecté en tant que {name}',
+                              {'name': widget.username.text.trim()})
+                          : tr('Connexion au backend'),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: widget.connected
                             ? IvoryColors.green
-                            : Colors.black87,
+                            : IvoryColors.ink,
                       ),
                     ),
                   ),
@@ -84,10 +88,10 @@ class _ConnectionCardState extends State<ConnectionCard> {
                     TextButton.icon(
                       onPressed: widget.onLogout,
                       icon: const Icon(Icons.logout, size: 16),
-                      label: const Text('D\u00e9connexion'),
+                      label: Text(tr('D\u00e9connexion')),
                     ),
                   Icon(expanded ? Icons.expand_less : Icons.expand_more,
-                      color: Colors.black45),
+                      color: IvoryColors.muted),
                 ],
               ),
             ),
@@ -112,9 +116,9 @@ class _ConnectionCardState extends State<ConnectionCard> {
                       Expanded(
                         child: TextField(
                           controller: widget.username,
-                          decoration: const InputDecoration(
-                            labelText: 'Identifiant',
-                            prefixIcon: Icon(Icons.person_outline),
+                          decoration: InputDecoration(
+                            labelText: tr('Identifiant'),
+                            prefixIcon: const Icon(Icons.person_outline),
                           ),
                         ),
                       ),
@@ -123,9 +127,9 @@ class _ConnectionCardState extends State<ConnectionCard> {
                         child: TextField(
                           controller: widget.password,
                           obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Mot de passe',
-                            prefixIcon: Icon(Icons.lock_outline),
+                          decoration: InputDecoration(
+                            labelText: tr('Mot de passe'),
+                            prefixIcon: const Icon(Icons.lock_outline),
                           ),
                         ),
                       ),
@@ -142,10 +146,10 @@ class _ConnectionCardState extends State<ConnectionCard> {
                           )
                         : const Icon(Icons.login),
                     label: Text(widget.loggingIn
-                        ? 'Connexion...'
+                        ? tr('Connexion...')
                         : (widget.connected
-                            ? 'Se reconnecter'
-                            : 'Se connecter')),
+                            ? tr('Se reconnecter')
+                            : tr('Se connecter'))),
                   ),
                   const SizedBox(height: 10),
                   TextField(
@@ -166,8 +170,9 @@ class _ConnectionCardState extends State<ConnectionCard> {
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
                         : const Icon(Icons.refresh),
-                    label: Text(
-                        widget.loading ? 'Chargement...' : widget.loadLabel),
+                    label: Text(widget.loading
+                        ? tr('Chargement...')
+                        : widget.loadLabel ?? tr('Synchroniser')),
                   ),
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import '../theme.dart';
+import '../i18n/tr.dart';
 
 class VideoCard extends StatelessWidget {
   const VideoCard({required this.videoUrl, required this.title, super.key});
@@ -31,7 +32,7 @@ class VideoCard extends StatelessWidget {
                   color: IvoryColors.green.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.play_circle_fill,
+                child: Icon(Icons.play_circle_fill,
                     color: IvoryColors.green, size: 28),
               ),
               const SizedBox(width: 12),
@@ -39,21 +40,19 @@ class VideoCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Vidéo de présentation',
-                        style: TextStyle(fontWeight: FontWeight.w800)),
+                    Text(tr('Vidéo de présentation'),
+                        style: const TextStyle(fontWeight: FontWeight.w800)),
                     const SizedBox(height: 2),
                     Text(
                       title,
-                      style:
-                          const TextStyle(fontSize: 12, color: Colors.black54),
+                      style: TextStyle(fontSize: 12, color: IvoryColors.muted),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios,
-                  size: 14, color: Colors.black45),
+              Icon(Icons.arrow_forward_ios, size: 14, color: IvoryColors.muted),
             ],
           ),
         ),
@@ -83,7 +82,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     super.initState();
     final uri = Uri.tryParse(widget.videoUrl.trim());
     if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) {
-      error = 'URL vidéo invalide.';
+      error = tr('URL vidéo invalide.');
       return;
     }
 
@@ -98,8 +97,10 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
       final reason = player.value.errorDescription;
       setState(() {
         error = reason == null || reason.trim().isEmpty
-            ? 'Impossible de lire la vidéo. Vérifiez votre connexion et le format du fichier.'
-            : 'Impossible de lire la vidéo. Cause détectée : $reason';
+            ? tr(
+                'Impossible de lire la vidéo. Vérifiez votre connexion et le format du fichier.')
+            : tr('Impossible de lire la vidéo. Cause détectée : {reason}',
+                {'reason': reason});
       });
     });
   }

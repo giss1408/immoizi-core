@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/property.dart';
 import '../theme.dart';
 import 'common.dart';
+import '../i18n/tr.dart';
 
 /// Page-level heading with an optional count badge, e.g. "Biens disponibles 6".
 class SectionHeader extends StatelessWidget {
@@ -33,8 +34,8 @@ class SectionHeader extends StatelessWidget {
           if (subtitle != null)
             Padding(
               padding: const EdgeInsets.only(top: 2),
-              child: Text(subtitle!,
-                  style: const TextStyle(color: IvoryColors.muted)),
+              child:
+                  Text(subtitle!, style: TextStyle(color: IvoryColors.muted)),
             ),
         ],
       ),
@@ -56,7 +57,7 @@ class CountBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text('$count',
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
               color: IvoryColors.green)),
@@ -69,16 +70,22 @@ class GroupedPropertyList extends StatelessWidget {
   const GroupedPropertyList(
       {required this.properties,
       required this.cardBuilder,
-      this.emptyMessage = 'Aucun bien ne correspond à votre recherche.',
+      this.emptyMessage,
       super.key});
 
   final List<Property> properties;
   final Widget Function(Property property) cardBuilder;
-  final String emptyMessage;
+
+  /// Null shows the default message.
+  final String? emptyMessage;
 
   @override
   Widget build(BuildContext context) {
-    if (properties.isEmpty) return EmptyState(message: emptyMessage);
+    if (properties.isEmpty) {
+      return EmptyState(
+          message: emptyMessage ??
+              tr('Aucun bien ne correspond à votre recherche.'));
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -96,7 +103,7 @@ class GroupedPropertyList extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(entry.key,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
                       color: IvoryColors.ink)),
@@ -157,7 +164,7 @@ class CategorySection extends StatelessWidget {
               child: Icon(icon, color: IvoryColors.green),
             ),
             title: Text(title,
-                style: const TextStyle(
+                style: TextStyle(
                     fontWeight: FontWeight.w800,
                     fontSize: 15.5,
                     color: IvoryColors.ink)),
@@ -166,15 +173,15 @@ class CategorySection extends StatelessWidget {
               children: [
                 CountBadge(count),
                 const SizedBox(width: 4),
-                const Icon(Icons.expand_more, color: IvoryColors.muted),
+                Icon(Icons.expand_more, color: IvoryColors.muted),
               ],
             ),
             childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
             children: [
               if (children.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
-                  child: MutedText('Aucune donnée disponible.'),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: MutedText(tr('Aucune donnée disponible.')),
                 )
               else
                 ...children,

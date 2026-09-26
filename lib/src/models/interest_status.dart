@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 
+import '../i18n/tr.dart';
 import '../theme.dart';
 
 /// French labels for PropertyInterestRequest statuses (GraphQL enum values).
 /// An unanswered request past its 6-day window shows as expired.
 String interestStatusLabel(String raw, {bool expired = false}) {
-  if (expired) return 'Expirée';
-  return const {
+  if (expired) return tr('Expirée');
+  return tr(const {
         'pending': 'En attente',
         'reviewing': 'En cours d’examen',
         'accepted': 'Acceptée',
         'rejected': 'Refusée',
       }[raw.toLowerCase()] ??
-      raw;
+      raw);
 }
 
 Color interestStatusColor(String raw, {bool expired = false}) {
   if (expired) return IvoryColors.muted;
   return switch (raw.toLowerCase()) {
-    'accepted' => IvoryColors.green,
+    'accepted' => IvoryColors.success,
     'rejected' => Colors.redAccent,
     _ => IvoryColors.orange,
   };

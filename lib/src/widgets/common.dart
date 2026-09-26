@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import '../i18n/tr.dart';
 
 class DetailChip extends StatelessWidget {
   const DetailChip({required this.icon, required this.label, super.key});
@@ -75,11 +76,10 @@ class ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-        color: const Color(0xFFFFF1E8),
+        color: Colors.redAccent.withOpacity(0.1),
         child: Padding(
           padding: const EdgeInsets.all(14),
-          child:
-              Text(message, style: const TextStyle(color: Color(0xFF9A3D16))),
+          child: Text(message, style: TextStyle(color: IvoryColors.ink)),
         ),
       );
 }
@@ -94,19 +94,21 @@ class CacheStatusBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final label = loading
-        ? 'Synchronisation en cours...'
+        ? tr('Synchronisation en cours...')
         : lastSynced == null
-            ? 'Aucune donn\u00e9e en cache \u2014 tirez vers le bas pour synchroniser'
-            : 'Donn\u00e9es en cache \u2014 derni\u00e8re mise \u00e0 jour ${_formatTimestamp(lastSynced!)}';
+            ? tr(
+                'Aucune donn\u00e9e en cache \u2014 tirez vers le bas pour synchroniser')
+            : tr('Données en cache — dernière mise à jour {date}',
+                {'date': _formatTimestamp(lastSynced!)});
 
     return Row(
       children: [
         Icon(loading ? Icons.sync : Icons.cached,
-            size: 14, color: Colors.black45),
+            size: 14, color: IvoryColors.muted),
         const SizedBox(width: 6),
         Expanded(
           child: Text(label,
-              style: const TextStyle(fontSize: 11, color: Colors.black45)),
+              style: TextStyle(fontSize: 11, color: IvoryColors.muted)),
         ),
       ],
     );
@@ -115,7 +117,10 @@ class CacheStatusBar extends StatelessWidget {
 
 String _formatTimestamp(DateTime dt) {
   String two(int value) => value.toString().padLeft(2, '0');
-  return '${two(dt.day)}/${two(dt.month)} \u00e0 ${two(dt.hour)}:${two(dt.minute)}';
+  return tr('{date} à {time}', {
+    'date': '${two(dt.day)}/${two(dt.month)}',
+    'time': '${two(dt.hour)}:${two(dt.minute)}',
+  });
 }
 
 class MutedText extends StatelessWidget {
@@ -124,7 +129,7 @@ class MutedText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Text(text, style: const TextStyle(color: Colors.black54));
+      Text(text, style: TextStyle(color: IvoryColors.muted));
 }
 
 class TestDataBadge extends StatelessWidget {
@@ -139,13 +144,13 @@ class TestDataBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFE0A800)),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.science, size: 12, color: Color(0xFF8A6D00)),
-          SizedBox(width: 4),
-          Text('Donnée de test',
-              style: TextStyle(
+          const Icon(Icons.science, size: 12, color: Color(0xFF8A6D00)),
+          const SizedBox(width: 4),
+          Text(tr('Donnée de test'),
+              style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF8A6D00))),
@@ -166,10 +171,10 @@ class MediaPlaceholder extends StatelessWidget {
       height: 120,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFFF3EDE4),
+        color: IvoryColors.border,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Icon(icon, size: 32, color: Colors.black26),
+      child: Icon(icon, size: 32, color: IvoryColors.muted.withOpacity(0.6)),
     );
   }
 }
@@ -182,9 +187,12 @@ class PropertyImageFallback extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         height: 150,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFFFFF3E6), Color(0xFFEAF6EE)],
+            colors: [
+              IvoryColors.orange.withOpacity(0.14),
+              IvoryColors.green.withOpacity(0.14)
+            ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -192,8 +200,8 @@ class PropertyImageFallback extends StatelessWidget {
         child: Center(
           child: Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-                color: Colors.white, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+                color: IvoryColors.surface, shape: BoxShape.circle),
             child: Icon(icon, size: 36, color: IvoryColors.orange),
           ),
         ),

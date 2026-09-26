@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/property.dart';
 import '../theme.dart';
 import 'common.dart';
+import '../i18n/tr.dart';
 
 /// Bordered listing card: photo with status and price overlays, then the
 /// title, location and key features.
@@ -17,6 +18,11 @@ class PropertyListingCard extends StatelessWidget {
 
   final Property property;
   final String statusLabel;
+
+  /// Green dot for available listings, whatever the display language.
+  bool get _isAvailable =>
+      statusLabel == tr('Disponible') ||
+      statusLabel.toLowerCase().startsWith('disponible');
   final VoidCallback onTap;
   final IconData fallbackIcon;
 
@@ -56,20 +62,20 @@ class PropertyListingCard extends StatelessWidget {
                       ),
                     ),
                     if (property.isShortTerm)
-                      const Positioned(
+                      Positioned(
                         top: 48,
                         left: 12,
                         child: _Overlay(
                           color: IvoryColors.green,
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
                             Icon(Icons.nights_stay,
-                                size: 14, color: Colors.white),
-                            SizedBox(width: 6),
-                            Text('Courte durée',
+                                size: 14, color: IvoryColors.onPrimary),
+                            const SizedBox(width: 6),
+                            Text(tr('Courte durée'),
                                 style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.white)),
+                                    color: IvoryColors.onPrimary)),
                           ]),
                         ),
                       ),
@@ -77,18 +83,16 @@ class PropertyListingCard extends StatelessWidget {
                       top: 12,
                       left: 12,
                       child: _Overlay(
-                        color: Colors.white,
+                        color: IvoryColors.surface,
                         child: Row(mainAxisSize: MainAxisSize.min, children: [
                           Icon(Icons.circle,
                               size: 8,
-                              color: statusLabel
-                                      .toLowerCase()
-                                      .startsWith('disponible')
-                                  ? IvoryColors.green
+                              color: _isAvailable
+                                  ? IvoryColors.success
                                   : IvoryColors.orange),
                           const SizedBox(width: 6),
                           Text(statusLabel,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   color: IvoryColors.ink)),
@@ -111,8 +115,8 @@ class PropertyListingCard extends StatelessWidget {
                       child: _Overlay(
                         color: IvoryColors.orange,
                         child: Text(property.priceLabel,
-                            style: const TextStyle(
-                                color: Colors.white,
+                            style: TextStyle(
+                                color: IvoryColors.onAccent,
                                 fontWeight: FontWeight.w900,
                                 fontSize: 14)),
                       ),
@@ -131,25 +135,25 @@ class PropertyListingCard extends StatelessWidget {
                           child: Text(property.title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800,
                                   color: IvoryColors.ink)),
                         ),
-                        const Icon(Icons.chevron_right_rounded,
+                        Icon(Icons.chevron_right_rounded,
                             color: IvoryColors.muted),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Row(children: [
-                      const Icon(Icons.place_outlined,
+                      Icon(Icons.place_outlined,
                           size: 16, color: IvoryColors.muted),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text('${property.district}, ${property.city}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: IvoryColors.muted)),
+                            style: TextStyle(color: IvoryColors.muted)),
                       ),
                     ]),
                     const SizedBox(height: 12),
@@ -157,8 +161,8 @@ class PropertyListingCard extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _Feature(
-                            Icons.bed_outlined, '${property.rooms} pièces'),
+                        _Feature(Icons.bed_outlined,
+                            tr('{count} pièces', {'count': property.rooms})),
                         _Feature(Icons.square_foot, '${property.surface} m²'),
                         _Feature(Icons.sell_outlined, property.category),
                         if (property.weeklyPriceLabel != null)
@@ -215,7 +219,7 @@ class _Feature extends StatelessWidget {
         Icon(icon, size: 16, color: IvoryColors.green),
         const SizedBox(width: 6),
         Text(label,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: IvoryColors.ink)),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/property.dart';
 import '../models/rental_type.dart';
 import '../theme.dart';
+import '../i18n/tr.dart';
 
 class PropertyFilters {
   const PropertyFilters(
@@ -76,11 +77,13 @@ class PropertyFilterSheet extends StatefulWidget {
   const PropertyFilterSheet(
       {required this.initial,
       required this.categories,
-      this.subtitle = 'Affinez les biens disponibles.',
+      this.subtitle,
       super.key});
   final PropertyFilters initial;
   final List<String> categories;
-  final String subtitle;
+
+  /// Null shows the default subtitle.
+  final String? subtitle;
 
   @override
   State<PropertyFilterSheet> createState() => _PropertyFilterSheetState();
@@ -120,18 +123,18 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('Filtres',
+                Text(tr('Filtres'),
                     style: Theme.of(context)
                         .textTheme
                         .headlineSmall
                         ?.copyWith(fontWeight: FontWeight.w900)),
-                TextButton(onPressed: reset, child: const Text('Réinitialiser'))
+                TextButton(onPressed: reset, child: Text(tr('Réinitialiser')))
               ]),
-              Text(widget.subtitle,
-                  style: const TextStyle(color: Colors.black54)),
+              Text(widget.subtitle ?? tr('Affinez les biens disponibles.'),
+                  style: TextStyle(color: IvoryColors.muted)),
               const SizedBox(height: 20),
-              const Text('Durée de location',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
+              Text(tr('Durée de location'),
+                  style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
               RentalTypeChips(
                   value: rentalType,
@@ -142,14 +145,20 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
               const SizedBox(height: 16),
               TextField(
                   controller: locationController,
-                  decoration: const InputDecoration(
-                      labelText: 'Localisation',
-                      hintText: 'Ville ou quartier',
-                      prefixIcon: Icon(Icons.location_on_outlined))),
+                  decoration: InputDecoration(
+                      labelText: tr('Localisation'),
+                      hintText: tr('Ville ou quartier'),
+                      prefixIcon: const Icon(Icons.location_on_outlined))),
               const SizedBox(height: 14),
               Text(
-                  '${rentalType == RentalType.shortTerm ? 'Budget par nuit' : 'Budget mensuel'} : '
-                  '${formatFcfa(priceRange.start.round())} - ${formatFcfa(priceRange.end.round())}',
+                  tr(
+                      rentalType == RentalType.shortTerm
+                          ? 'Budget par nuit : {min} - {max}'
+                          : 'Budget mensuel : {min} - {max}',
+                      {
+                        'min': formatFcfa(priceRange.start.round()),
+                        'max': formatFcfa(priceRange.end.round()),
+                      }),
                   style: const TextStyle(fontWeight: FontWeight.w700)),
               RangeSlider(
                   values: priceRange,
@@ -162,19 +171,19 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
                   onChanged: (value) => setState(() => priceRange = value)),
               const SizedBox(height: 12),
               _FilterStepper(
-                  label: 'Pièces minimum',
+                  label: tr('Pièces minimum'),
                   value: minRooms,
                   onChanged: (value) => setState(() => minRooms = value)),
               _FilterStepper(
-                  label: 'Surface minimum',
+                  label: tr('Surface minimum'),
                   suffix: ' m²',
                   value: minSurface,
                   step: 10,
                   onChanged: (value) => setState(() => minSurface = value)),
               if (widget.categories.isNotEmpty) ...[
                 const SizedBox(height: 14),
-                const Text('Types de biens',
-                    style: TextStyle(fontWeight: FontWeight.w700)),
+                Text(tr('Types de biens'),
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -209,7 +218,7 @@ class _PropertyFilterSheetState extends State<PropertyFilterSheet> {
                               categories: categories,
                               rentalType: rentalType)),
                       icon: const Icon(Icons.check),
-                      label: const Text('Appliquer les filtres'))),
+                      label: Text(tr('Appliquer les filtres')))),
             ])));
   }
 }

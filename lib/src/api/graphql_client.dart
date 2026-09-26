@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../i18n/tr.dart';
+
 /// Base class for failures talking to the Immoizi backend. [userMessage] is
 /// safe to show in the UI.
 sealed class ApiException implements Exception {
@@ -11,7 +13,7 @@ sealed class ApiException implements Exception {
   final String userMessage;
 
   @override
-  String toString() => userMessage;
+  String toString() => tr(userMessage);
 }
 
 /// The backend could not be reached (offline, timeout, DNS, refused).
@@ -34,10 +36,11 @@ class ServerException extends ApiException {
   final int? statusCode;
 }
 
-/// Turns any error into a message fit for the UI.
+/// Turns any error into a message fit for the UI, in the active language.
+/// Backend messages already arrive translated (Accept-Language).
 String describeError(Object error) => error is ApiException
-    ? error.userMessage
-    : 'Une erreur inattendue est survenue.';
+    ? tr(error.userMessage)
+    : tr('Une erreur inattendue est survenue.');
 
 class GraphQLClient {
   GraphQLClient({http.Client? httpClient, this.timeout = _defaultTimeout})
@@ -67,7 +70,7 @@ class GraphQLClient {
             uri,
             headers: {
               'Content-Type': 'application/json',
-              'Accept-Language': 'fr',
+              'Accept-Language': AppStrings.language.code,
               if (token.isNotEmpty) 'Authorization': 'Bearer $token',
             },
             body: jsonEncode({'query': query, 'variables': variables}),
@@ -89,7 +92,8 @@ class GraphQLClient {
       payload = jsonDecode(utf8.decode(response.bodyBytes));
     } on FormatException {
       throw ServerException(
-          'Réponse inattendue du serveur (HTTP ${response.statusCode}).',
+          tr('Réponse inattendue du serveur (HTTP {status}).',
+              {'status': response.statusCode}),
           statusCode: response.statusCode);
     }
     if (payload is! Map<String, dynamic>) {
@@ -114,7 +118,9 @@ class GraphQLClient {
       throw ServerException(message, statusCode: response.statusCode);
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw ServerException('Erreur du serveur (HTTP ${response.statusCode}).',
+      throw ServerException(
+          tr('Erreur du serveur (HTTP {status}).',
+              {'status': response.statusCode}),
           statusCode: response.statusCode);
     }
 

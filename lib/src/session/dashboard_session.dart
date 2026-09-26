@@ -9,6 +9,7 @@ import '../config/app_config.dart';
 import '../notifications/app_notification.dart';
 import '../notifications/system_notifications.dart';
 import 'session_store.dart';
+import '../i18n/tr.dart';
 
 /// Shared session, loading and polling logic for the apps' home pages.
 ///
@@ -117,7 +118,8 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
 
   Future<void> login() async {
     if (username.text.trim().isEmpty || password.text.isEmpty) {
-      setState(() => error = 'Renseignez votre identifiant et mot de passe.');
+      setState(
+          () => error = tr('Renseignez votre identifiant et mot de passe.'));
       return;
     }
     setState(() {
@@ -200,12 +202,12 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
     } on AuthException catch (exception) {
       if (!mounted || generation != _generation) return;
       if (signedIn) {
-        await _expireSession(exception.userMessage);
+        await _expireSession(describeError(exception));
       } else {
         setState(() {
           connected = false;
           online = false;
-          error = exception.userMessage;
+          error = describeError(exception);
         });
       }
     } catch (exception) {
@@ -216,9 +218,11 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
         online = false;
         if (!hasData) {
           dashboard = demoDashboard();
-          error = '$message Mode démonstration activé.';
+          error =
+              tr('{message} Mode démonstration activé.', {'message': message});
         } else {
-          error = '$message Dernières données affichées.';
+          error = tr(
+              '{message} Dernières données affichées.', {'message': message});
         }
       });
     } finally {
@@ -259,7 +263,7 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
       if (remote != local) await load();
     } on AuthException catch (exception) {
       if (mounted && generation == _generation) {
-        await _expireSession(exception.userMessage);
+        await _expireSession(describeError(exception));
       }
     } on NetworkException {
       if (mounted && connected) setState(() => connected = false);

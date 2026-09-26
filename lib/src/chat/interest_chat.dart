@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/graphql_client.dart';
 import '../api/json.dart';
 import '../theme.dart';
+import '../i18n/tr.dart';
 
 class InterestChatPage extends StatefulWidget {
   const InterestChatPage(
@@ -62,8 +63,8 @@ class _InterestChatPageState extends State<InterestChatPage> {
       }
     } catch (exception) {
       if (mounted) {
-        setState(() =>
-            error = 'Chargement impossible : ${describeError(exception)}');
+        setState(() => error = tr('Chargement impossible : {error}',
+            {'error': describeError(exception)}));
       }
     } finally {
       if (mounted) setState(() => loading = false);
@@ -106,8 +107,8 @@ class _InterestChatPageState extends State<InterestChatPage> {
       await _loadMessages();
     } catch (exception) {
       if (mounted) {
-        setState(
-            () => error = 'Envoi impossible : ${describeError(exception)}');
+        setState(() => error = tr(
+            'Envoi impossible : {error}', {'error': describeError(exception)}));
       }
     } finally {
       if (mounted) setState(() => sending = false);
@@ -128,7 +129,7 @@ class _InterestChatPageState extends State<InterestChatPage> {
             child: loading
                 ? const Center(child: CircularProgressIndicator())
                 : messages.isEmpty
-                    ? const Center(child: Text('Aucun message.'))
+                    ? Center(child: Text(tr('Aucun message.')))
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: messages.length,
@@ -138,7 +139,7 @@ class _InterestChatPageState extends State<InterestChatPage> {
           ),
           Container(
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            color: Colors.white,
+            color: IvoryColors.surface,
             child: Column(
               children: [
                 Row(children: [
@@ -146,20 +147,21 @@ class _InterestChatPageState extends State<InterestChatPage> {
                       child: DropdownButtonFormField<String>(
                           value: messageType,
                           decoration: InputDecoration(
-                              labelText: widget.isManager ? 'Type' : 'Réponse'),
+                              labelText:
+                                  widget.isManager ? 'Type' : tr('Réponse')),
                           items: [
                             const DropdownMenuItem(
                                 value: 'message', child: Text('Message')),
                             if (widget.isManager)
-                              const DropdownMenuItem(
+                              DropdownMenuItem(
                                   value: 'visit_proposal',
-                                  child: Text('Proposer une visite')),
-                            const DropdownMenuItem(
+                                  child: Text(tr('Proposer une visite'))),
+                            DropdownMenuItem(
                                 value: 'visit_confirmation',
-                                child: Text('Confirmer la visite')),
-                            const DropdownMenuItem(
+                                child: Text(tr('Confirmer la visite'))),
+                            DropdownMenuItem(
                                 value: 'visit_declined',
-                                child: Text('Refuser la visite')),
+                                child: Text(tr('Refuser la visite'))),
                           ],
                           onChanged: (value) => setState(
                               () => messageType = value ?? 'message'))),
@@ -167,7 +169,7 @@ class _InterestChatPageState extends State<InterestChatPage> {
                     IconButton(
                         onPressed: _chooseVisitDate,
                         icon: const Icon(Icons.event),
-                        tooltip: 'Choisir une date'),
+                        tooltip: tr('Choisir une date')),
                 ]),
                 const SizedBox(height: 8),
                 Row(children: [
@@ -178,8 +180,8 @@ class _InterestChatPageState extends State<InterestChatPage> {
                           maxLines: 3,
                           decoration: InputDecoration(
                               hintText: widget.isManager
-                                  ? 'Votre message'
-                                  : 'Votre réponse'))),
+                                  ? tr('Votre message')
+                                  : tr('Votre réponse')))),
                   const SizedBox(width: 8),
                   IconButton(
                       onPressed: sending ? null : _send,
@@ -187,13 +189,17 @@ class _InterestChatPageState extends State<InterestChatPage> {
                           ? const CircularProgressIndicator()
                           : const Icon(Icons.send),
                       color: IvoryColors.green,
-                      tooltip: 'Envoyer'),
+                      tooltip: tr('Envoyer')),
                 ]),
                 if (proposedVisitAt != null)
                   Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(
-                          'Visite : ${proposedVisitAt!.day}/${proposedVisitAt!.month}/${proposedVisitAt!.year} à ${proposedVisitAt!.hour.toString().padLeft(2, '0')}:${proposedVisitAt!.minute.toString().padLeft(2, '0')}')),
+                      child: Text(tr('Visite : {date} à {time}', {
+                        'date':
+                            '${proposedVisitAt!.day}/${proposedVisitAt!.month}/${proposedVisitAt!.year}',
+                        'time':
+                            '${proposedVisitAt!.hour.toString().padLeft(2, '0')}:${proposedVisitAt!.minute.toString().padLeft(2, '0')}',
+                      }))),
               ],
             ),
           ),
@@ -220,7 +226,7 @@ class InterestMessageItem {
         json['proposedVisitAt'] as String?,
         json['createdAt'] as String? ?? '',
         (json['sender'] as Map<String, dynamic>?)?['username'] as String? ??
-            'Utilisateur',
+            tr('Utilisateur'),
       );
 }
 
@@ -243,7 +249,8 @@ class _MessageBubble extends StatelessWidget {
               const SizedBox(height: 4),
               Text(message.message),
               if (message.proposedVisitAt != null)
-                Text('Visite proposée : ${message.proposedVisitAt}'),
+                Text(tr('Visite proposée : {date}',
+                    {'date': message.proposedVisitAt})),
             ],
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../i18n/tr.dart';
 import 'app_notification.dart';
 
 /// Shows backend notifications as Android/iOS system notifications while the
@@ -11,13 +12,13 @@ class SystemNotifications {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static bool _ready = false;
 
-  static const _channel = AndroidNotificationDetails(
-    'immoizi_activity',
-    'Activité Immoizi',
-    channelDescription: 'Demandes, réponses et propositions de visite',
-    importance: Importance.high,
-    priority: Priority.high,
-  );
+  static AndroidNotificationDetails get _channel => AndroidNotificationDetails(
+        'immoizi_activity',
+        tr('Activité Immoizi'),
+        channelDescription: tr('Demandes, réponses et propositions de visite'),
+        importance: Importance.high,
+        priority: Priority.high,
+      );
 
   /// Initialises the plugin and asks for the permission (Android 13+, iOS).
   /// Safe to call repeatedly; failures (tests, unsupported platforms) are
@@ -46,8 +47,8 @@ class SystemNotifications {
         notification.id.hashCode & 0x7fffffff,
         notification.title,
         notification.message,
-        const NotificationDetails(
-            android: _channel, iOS: DarwinNotificationDetails()),
+        NotificationDetails(
+            android: _channel, iOS: const DarwinNotificationDetails()),
       );
     } catch (_) {
       // Showing an alert is best effort; the in-app badge still updates.

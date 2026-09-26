@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import '../i18n/tr.dart';
 
 class PropertySearchBar extends StatelessWidget {
   const PropertySearchBar(
@@ -8,14 +9,16 @@ class PropertySearchBar extends StatelessWidget {
       required this.onChanged,
       required this.onOpenFilters,
       this.activeFilterCount = 0,
-      this.hintText = 'Rechercher un bien...',
+      this.hintText,
       super.key});
 
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
   final VoidCallback onOpenFilters;
   final int activeFilterCount;
-  final String hintText;
+
+  /// Null shows the default hint.
+  final String? hintText;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +29,7 @@ class PropertySearchBar extends StatelessWidget {
             controller: controller,
             onChanged: onChanged,
             decoration: InputDecoration(
-              hintText: hintText,
+              hintText: hintText ?? tr('Rechercher un bien...'),
               prefixIcon: const Icon(Icons.search),
               suffixIcon: controller.text.isEmpty
                   ? null
@@ -38,7 +41,7 @@ class PropertySearchBar extends StatelessWidget {
                       },
                     ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: IvoryColors.surface,
               border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(32),
                   borderSide: BorderSide.none),
@@ -55,7 +58,7 @@ class PropertySearchBar extends StatelessWidget {
               icon: Badge(
                   isLabelVisible: activeFilterCount > 0,
                   label: Text('$activeFilterCount'),
-                  child: const Icon(Icons.tune, color: Colors.white))),
+                  child: Icon(Icons.tune, color: IvoryColors.onAccent))),
         ),
       ],
     );

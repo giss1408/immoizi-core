@@ -1,3 +1,5 @@
+import '../i18n/tr.dart';
+
 /// Backend listing statuses (Description.LISTING_STATUS_CHOICES) with their
 /// French labels, in the order shown to landlords.
 const listingStatusLabels = {
@@ -13,6 +15,7 @@ const listingStatusLabels = {
 /// The backend value for a status as returned by GraphQL (`AVAILABLE`).
 String listingStatusValue(String raw) => raw.toLowerCase();
 
-/// French label for a status; unknown values are shown as they are.
+/// Label for a status in the active language; unknown values are shown as
+/// they are.
 String listingStatusLabel(String raw) =>
-    listingStatusLabels[listingStatusValue(raw)] ?? raw;
+    tr(listingStatusLabels[listingStatusValue(raw)] ?? raw);

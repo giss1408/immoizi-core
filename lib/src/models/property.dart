@@ -1,4 +1,5 @@
 import '../api/json.dart';
+import '../i18n/tr.dart';
 import '../theme.dart';
 import 'rental_type.dart';
 
@@ -52,7 +53,7 @@ class Property {
 
   /// "210 000 FCFA / semaine" for short stays with a weekly rate.
   String? get weeklyPriceLabel => isShortTerm && weeklyPrice != null
-      ? '${formatFcfa(weeklyPrice!)} / semaine'
+      ? tr('{amount} / semaine', {'amount': formatFcfa(weeklyPrice!)})
       : null;
 
   Property copyWith({

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../theme.dart';
+import '../i18n/tr.dart';
 
 /// Green brand header that extends under the status bar, with a thin
 /// orange / white / green flag stripe. The title always stays on one line.
@@ -15,7 +16,7 @@ class AppHeader extends StatelessWidget {
     this.connectedLabel = '',
     this.loading = false,
     this.onRefresh,
-    this.refreshTooltip = 'Synchroniser',
+    this.refreshTooltip,
     this.bottom,
     super.key,
   });
@@ -30,7 +31,9 @@ class AppHeader extends StatelessWidget {
   final String connectedLabel;
   final bool loading;
   final VoidCallback? onRefresh;
-  final String refreshTooltip;
+
+  /// Null shows the default tooltip.
+  final String? refreshTooltip;
 
   /// Optional widget pinned inside the header, e.g. the search bar.
   final Widget? bottom;
@@ -41,13 +44,14 @@ class AppHeader extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [IvoryColors.green, IvoryColors.greenDark],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+          borderRadius:
+              const BorderRadius.vertical(bottom: Radius.circular(28)),
         ),
         child: Column(
           children: [
@@ -57,17 +61,18 @@ class AppHeader extends StatelessWidget {
                 children: [
                   IconButton(
                     onPressed: () => Scaffold.of(context).openDrawer(),
-                    icon: const Icon(Icons.menu_rounded, color: Colors.white),
+                    icon:
+                        Icon(Icons.menu_rounded, color: IvoryColors.onPrimary),
                     tooltip: 'Menu',
                   ),
                   Container(
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.16),
+                      color: IvoryColors.onPrimary.withOpacity(0.16),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(icon, color: Colors.white),
+                    child: Icon(icon, color: IvoryColors.onPrimary),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -84,7 +89,7 @@ class AppHeader extends StatelessWidget {
                                 .textTheme
                                 .titleLarge
                                 ?.copyWith(
-                                    color: Colors.white,
+                                    color: IvoryColors.onPrimary,
                                     fontWeight: FontWeight.w900),
                           ),
                         ),
@@ -92,8 +97,9 @@ class AppHeader extends StatelessWidget {
                           subtitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                              color: Colors.white70, fontSize: 12.5),
+                          style: TextStyle(
+                              color: IvoryColors.onPrimary.withOpacity(0.72),
+                              fontSize: 12.5),
                         ),
                       ],
                     ),
@@ -101,15 +107,16 @@ class AppHeader extends StatelessWidget {
                   if (onRefresh != null)
                     IconButton(
                       onPressed: loading ? null : onRefresh,
-                      tooltip: refreshTooltip,
+                      tooltip: refreshTooltip ?? tr('Synchroniser'),
                       icon: loading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
+                                  strokeWidth: 2, color: IvoryColors.onPrimary),
                             )
-                          : const Icon(Icons.sync_rounded, color: Colors.white),
+                          : Icon(Icons.sync_rounded,
+                              color: IvoryColors.onPrimary),
                     ),
                 ],
               ),
@@ -180,13 +187,16 @@ class ConnectionStatusPill extends StatelessWidget {
     final live = connected || online;
     final dotColor = live
         ? (onDark ? const Color(0xFF7FD6A4) : IvoryColors.green)
-        : (onDark ? IvoryColors.orange : Colors.black38);
-    final textColor =
-        onDark ? Colors.white : (live ? IvoryColors.green : Colors.black54);
+        : (onDark ? IvoryColors.orange : IvoryColors.muted);
+    final textColor = onDark
+        ? IvoryColors.onPrimary
+        : (live ? IvoryColors.green : IvoryColors.muted);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: onDark ? Colors.white.withOpacity(0.14) : Colors.white,
+        color: onDark
+            ? IvoryColors.onPrimary.withOpacity(0.14)
+            : IvoryColors.surface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -201,10 +211,10 @@ class ConnectionStatusPill extends StatelessWidget {
           Flexible(
             child: Text(
               connected
-                  ? 'Connecté — $label'
+                  ? tr('Connecté — {name}', {'name': label})
                   : online
-                      ? 'Visiteur — en ligne'
-                      : 'Mode démonstration',
+                      ? tr('Visiteur — en ligne')
+                      : tr('Mode démonstration'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
@@ -224,7 +234,7 @@ class AppDrawer extends StatelessWidget {
     required this.connected,
     required this.onLogout,
     required this.applicationName,
-    this.homeLabel = 'Accueil',
+    this.homeLabel,
     this.extraComingSoonTiles = const [],
     super.key,
   });
@@ -234,7 +244,9 @@ class AppDrawer extends StatelessWidget {
   final bool connected;
   final VoidCallback onLogout;
   final String applicationName;
-  final String homeLabel;
+
+  /// Null shows the default label.
+  final String? homeLabel;
 
   /// Role-specific "coming soon" entries shown right after the home entry.
   final List<DrawerComingSoonTile> extraComingSoonTiles;
@@ -248,9 +260,9 @@ class AppDrawer extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [IvoryColors.green, Color(0xFF00733A)],
+                  colors: [IvoryColors.green, IvoryColors.greenDark],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -258,20 +270,21 @@ class AppDrawer extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 26,
-                    backgroundColor: Colors.white24,
-                    child: Icon(Icons.person, color: Colors.white),
+                    backgroundColor: IvoryColors.onPrimary.withOpacity(0.24),
+                    child: Icon(Icons.person, color: IvoryColors.onPrimary),
                   ),
                   const SizedBox(height: 10),
                   Text(name,
-                      style: const TextStyle(
-                          color: Colors.white,
+                      style: TextStyle(
+                          color: IvoryColors.onPrimary,
                           fontWeight: FontWeight.w800,
                           fontSize: 16)),
                   Text(role,
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 12)),
+                      style: TextStyle(
+                          color: IvoryColors.onPrimary.withOpacity(0.72),
+                          fontSize: 12)),
                   const SizedBox(height: 8),
                   ConnectionStatusPill(
                       connected: connected, label: name, onDark: true),
@@ -283,38 +296,35 @@ class AppDrawer extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 children: [
                   ListTile(
-                    leading: const Icon(Icons.home, color: IvoryColors.green),
-                    title: Text(homeLabel),
+                    leading: Icon(Icons.home, color: IvoryColors.green),
+                    title: Text(homeLabel ?? tr('Accueil')),
                     onTap: () => Navigator.of(context).pop(),
                   ),
                   ...extraComingSoonTiles,
                   const DrawerComingSoonTile(
                       icon: Icons.notifications_none, title: 'Notifications'),
-                  const DrawerComingSoonTile(
-                      icon: Icons.translate, title: 'Langue (FR / EN)'),
-                  const DrawerComingSoonTile(
-                      icon: Icons.support_agent, title: 'Aide & support'),
-                  const DrawerComingSoonTile(
+                  DrawerComingSoonTile(
+                      icon: Icons.support_agent, title: tr('Aide & support')),
+                  DrawerComingSoonTile(
                       icon: Icons.privacy_tip_outlined,
-                      title: 'Confidentialité & conditions'),
+                      title: tr('Confidentialité & conditions')),
                   const Divider(),
                   ListTile(
-                    leading: const Icon(Icons.info_outline,
-                        color: IvoryColors.green),
-                    title: const Text('À propos'),
+                    leading: Icon(Icons.info_outline, color: IvoryColors.green),
+                    title: Text(tr('À propos')),
                     onTap: () {
                       Navigator.of(context).pop();
                       showAboutDialog(
                         context: context,
                         applicationName: applicationName,
                         applicationVersion: '1.0.0',
-                        applicationLegalese: '© Immoizi — Côte d’Ivoire',
+                        applicationLegalese: tr('© Immoizi — Côte d’Ivoire'),
                       );
                     },
                   ),
                   ListTile(
                     leading: const Icon(Icons.logout, color: Colors.redAccent),
-                    title: const Text('Déconnexion'),
+                    title: Text(tr('Déconnexion')),
                     onTap: () {
                       Navigator.of(context).pop();
                       onLogout();
@@ -341,15 +351,16 @@ class DrawerComingSoonTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       enabled: false,
-      leading: Icon(icon, color: Colors.black26),
-      title: Text(title, style: const TextStyle(color: Colors.black45)),
+      leading: Icon(icon, color: IvoryColors.muted.withOpacity(0.5)),
+      title: Text(title,
+          style: TextStyle(color: IvoryColors.muted.withOpacity(0.8))),
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
           color: IvoryColors.orange.withOpacity(0.12),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Text('Bientôt',
+        child: Text(tr('Bientôt'),
             style: TextStyle(
                 fontSize: 11,
                 color: IvoryColors.orange,
