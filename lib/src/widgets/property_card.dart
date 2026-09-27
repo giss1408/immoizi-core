@@ -5,7 +5,8 @@ import '../theme.dart';
 import 'common.dart';
 import '../i18n/tr.dart';
 
-/// Bordered listing card: photo with status and price overlays, then the
+/// Listing card with a strong outline so it stands out from the page
+/// background: photo with status and price overlays, then the
 /// title, location and key features.
 class PropertyListingCard extends StatelessWidget {
   const PropertyListingCard(
@@ -33,6 +34,11 @@ class PropertyListingCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 14),
       child: Card(
         clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+              color: IvoryColors.muted.withOpacity(0.45), width: 1.5),
+        ),
         child: InkWell(
           onTap: onTap,
           child: Column(

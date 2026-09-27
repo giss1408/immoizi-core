@@ -1,45 +1,14 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:immoizi_core/immoizi_core.dart';
+import 'package:immoizi_core/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-/// Every literal passed to tr() under [dir], decoded like Dart would.
-Set<String> trKeys(String dir) {
-  // Single- or double-quoted Dart literal; the text is group 1 or 2.
-  const literal = r"""(?:'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)")""";
-  final direct = RegExp(r'(?<![\w.])tr\(\s*' + literal);
-  final ternary = RegExp(
-      r'(?<![\w.])tr\(\s*[^,()]*?\?\s*' + literal + r'\s*:\s*' + literal);
-  String decode(String s) => s
-      .replaceAllMapped(RegExp(r'\\u([0-9a-fA-F]{4})'),
-          (m) => String.fromCharCode(int.parse(m[1]!, radix: 16)))
-      .replaceAll(r"\'", "'")
-      .replaceAll(r'\$', r'$');
-  final keys = <String>{};
-  for (final file in Directory(dir).listSync(recursive: true)) {
-    if (file is! File || !file.path.endsWith('.dart')) continue;
-    final source = file.readAsStringSync();
-    for (final m in direct.allMatches(source)) {
-      keys.add(decode(m[1] ?? m[2]!));
-    }
-    for (final m in ternary.allMatches(source)) {
-      keys
-        ..add(decode(m[1] ?? m[2]!))
-        ..add(decode(m[3] ?? m[4]!));
-    }
-  }
-  return keys;
-}
 
 void main() {
   tearDown(() => AppStrings.language = AppLanguage.fr);
 
   test('every tr() string in the core has an English translation', () {
-    final missing =
-        trKeys('lib').where((key) => !AppStrings.hasTranslation(key)).toList();
-    expect(missing, isEmpty);
+    expect(missingTranslations('lib'), isEmpty);
   });
 
   test('tr translates and fills placeholders', () {

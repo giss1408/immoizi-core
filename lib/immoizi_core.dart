@@ -1,6 +1,7 @@
 /// Shared building blocks for the Immoizi manager and tenant apps.
 library;
 
+export 'src/app.dart';
 export 'src/api/graphql_client.dart';
 export 'src/api/json.dart';
 export 'src/api/notifications_poll.dart';
@@ -25,6 +26,9 @@ export 'src/theme.dart';
 export 'src/widgets/app_shell.dart';
 export 'src/widgets/common.dart';
 export 'src/widgets/connection_card.dart';
+export 'src/widgets/dashboard_scaffold.dart';
+export 'src/widgets/notification_tiles.dart';
 export 'src/widgets/property_card.dart';
+export 'src/widgets/property_details.dart';
 export 'src/widgets/property_search_bar.dart';
 export 'src/widgets/sections.dart';

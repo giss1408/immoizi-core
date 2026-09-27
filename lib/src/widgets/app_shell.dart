@@ -3,10 +3,17 @@ import 'package:flutter/services.dart';
 
 import '../theme.dart';
 import '../i18n/tr.dart';
+import 'property_search_bar.dart';
 
 /// Green brand header that extends under the status bar, with a thin
 /// orange / white / green flag stripe. The title always stays on one line.
-class AppHeader extends StatelessWidget {
+///
+/// When [collapsed], the badge, subtitle and status pill fold away so the
+/// list below gets more room; the title row stays visible.
+///
+/// With a [search], the title row shows search and filter buttons; tapping
+/// search swaps the title row for the search field until it is closed.
+class AppHeader extends StatefulWidget {
   const AppHeader({
     required this.title,
     required this.subtitle,
@@ -17,7 +24,8 @@ class AppHeader extends StatelessWidget {
     this.loading = false,
     this.onRefresh,
     this.refreshTooltip,
-    this.bottom,
+    this.search,
+    this.collapsed = false,
     super.key,
   });
 
@@ -35,12 +43,46 @@ class AppHeader extends StatelessWidget {
   /// Null shows the default tooltip.
   final String? refreshTooltip;
 
-  /// Optional widget pinned inside the header, e.g. the search bar.
-  final Widget? bottom;
+  /// Listing search, opened from a button in the title row.
+  final PropertySearchBar? search;
+
+  /// Compact form, used while the content below is scrolled down.
+  final bool collapsed;
+
+  /// Next [collapsed] value after [notification] from the list below the
+  /// header. The gap between the two thresholds avoids flicker.
+  static bool collapsedAfter(ScrollNotification notification,
+      {required bool current}) {
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
+      return current;
+    }
+    final offset = notification.metrics.pixels;
+    if (offset > 56) return true;
+    if (offset < 16) return false;
+    return current;
+  }
+
+  @override
+  State<AppHeader> createState() => _AppHeaderState();
+}
+
+class _AppHeaderState extends State<AppHeader> {
+  /// Keeps an active query visible, e.g. after switching tabs.
+  late bool searching = widget.search?.controller.text.isNotEmpty ?? false;
+
+  void _closeSearch() {
+    final search = widget.search!;
+    search.controller.clear();
+    search.onChanged('');
+    setState(() => searching = false);
+  }
 
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
+    final search = widget.search;
+    final collapsed = widget.collapsed;
+    final showSearch = searching && search != null;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Container(
@@ -56,90 +98,160 @@ class AppHeader extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.fromLTRB(8, topInset + 8, 8, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Scaffold.of(context).openDrawer(),
-                    icon:
-                        Icon(Icons.menu_rounded, color: IvoryColors.onPrimary),
-                    tooltip: 'Menu',
-                  ),
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: IvoryColors.onPrimary.withOpacity(0.16),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(icon, color: IvoryColors.onPrimary),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            title,
-                            maxLines: 1,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(
-                                    color: IvoryColors.onPrimary,
-                                    fontWeight: FontWeight.w900),
+              padding:
+                  EdgeInsets.fromLTRB(8, topInset + (collapsed ? 4 : 8), 8, 0),
+              child: AnimatedSwitcher(
+                duration: _foldDuration,
+                child: showSearch
+                    ? Padding(
+                        key: const ValueKey('search'),
+                        padding: const EdgeInsets.fromLTRB(8, 4, 8, 4),
+                        child: PropertySearchBar(
+                          controller: search.controller,
+                          onChanged: search.onChanged,
+                          onOpenFilters: search.onOpenFilters,
+                          activeFilterCount: search.activeFilterCount,
+                          hintText: search.hintText,
+                          autofocus: true,
+                          onClose: _closeSearch,
+                        ),
+                      )
+                    : Row(
+                        key: const ValueKey('title'),
+                        children: [
+                          IconButton(
+                            onPressed: () => Scaffold.of(context).openDrawer(),
+                            icon: Icon(Icons.menu_rounded,
+                                color: IvoryColors.onPrimary),
+                            tooltip: 'Menu',
                           ),
-                        ),
-                        Text(
-                          subtitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                              color: IvoryColors.onPrimary.withOpacity(0.72),
-                              fontSize: 12.5),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (onRefresh != null)
-                    IconButton(
-                      onPressed: loading ? null : onRefresh,
-                      tooltip: refreshTooltip ?? tr('Synchroniser'),
-                      icon: loading
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: IvoryColors.onPrimary),
-                            )
-                          : Icon(Icons.sync_rounded,
-                              color: IvoryColors.onPrimary),
-                    ),
-                ],
+                          _Foldable(
+                            collapsed: collapsed,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color:
+                                      IvoryColors.onPrimary.withOpacity(0.16),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Icon(widget.icon,
+                                    color: IvoryColors.onPrimary),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    widget.title,
+                                    maxLines: 1,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
+                                            color: IvoryColors.onPrimary,
+                                            fontWeight: FontWeight.w900),
+                                  ),
+                                ),
+                                _Foldable(
+                                  collapsed: collapsed,
+                                  child: Text(
+                                    widget.subtitle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        color: IvoryColors.onPrimary
+                                            .withOpacity(0.72),
+                                        fontSize: 12.5),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (search != null) ...[
+                            IconButton(
+                              onPressed: () => setState(() => searching = true),
+                              tooltip: tr('Rechercher'),
+                              icon: Icon(Icons.search_rounded,
+                                  color: IvoryColors.onPrimary),
+                            ),
+                            FilterButton(
+                                onPressed: search.onOpenFilters,
+                                activeCount: search.activeFilterCount),
+                          ],
+                          if (widget.onRefresh != null)
+                            IconButton(
+                              onPressed:
+                                  widget.loading ? null : widget.onRefresh,
+                              tooltip:
+                                  widget.refreshTooltip ?? tr('Synchroniser'),
+                              icon: widget.loading
+                                  ? SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: IvoryColors.onPrimary),
+                                    )
+                                  : Icon(Icons.sync_rounded,
+                                      color: IvoryColors.onPrimary),
+                            ),
+                        ],
+                      ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: ConnectionStatusPill(
-                    connected: connected,
-                    online: online,
-                    label: connectedLabel,
-                    onDark: true),
+            _Foldable(
+              collapsed: collapsed,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ConnectionStatusPill(
+                      connected: widget.connected,
+                      online: widget.online,
+                      label: widget.connectedLabel,
+                      onDark: true),
+                ),
               ),
             ),
-            if (bottom != null)
-              Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                  child: bottom),
-            const SizedBox(height: 16),
+            AnimatedContainer(
+                duration: _foldDuration,
+                curve: Curves.easeOut,
+                height: collapsed ? 10 : 16),
             const _FlagStripe(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+const _foldDuration = Duration(milliseconds: 200);
+
+/// Shrinks [child] to nothing, with a fade, while [collapsed].
+class _Foldable extends StatelessWidget {
+  const _Foldable({required this.collapsed, required this.child});
+
+  final bool collapsed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: _foldDuration,
+      curve: Curves.easeOut,
+      alignment: Alignment.topLeft,
+      child: AnimatedOpacity(
+        duration: _foldDuration,
+        opacity: collapsed ? 0 : 1,
+        child: collapsed ? const SizedBox.shrink() : child,
       ),
     );
   }

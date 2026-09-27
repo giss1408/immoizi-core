@@ -51,6 +51,8 @@ const coreEnglish = <String, String>{
   'Erreur du serveur.': 'Server error.',
   'Expirée': 'Expired',
   'Filtres': 'Filters',
+  'Rechercher': 'Search',
+  'Fermer': 'Close',
   'Identifiant': 'Username',
   'Identifiant ou mot de passe incorrect.': 'Incorrect username or password.',
   'Impossible de lire la vidéo. Cause détectée : {reason}':
@@ -117,4 +119,7 @@ const coreEnglish = <String, String>{
   '{surface} m²': '{surface} m²',
   '© Immoizi — Côte d’Ivoire': '© Immoizi — Côte d’Ivoire',
   'À propos': 'About',
+  'Aucun message initial.': 'No initial message.',
+  'Supprimer la notification': 'Delete notification',
+  'Vidéo disponible': 'Video available',
 };

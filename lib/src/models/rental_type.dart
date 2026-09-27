@@ -27,7 +27,7 @@ enum RentalType {
       '$raw'.toLowerCase() == shortTerm.apiValue ? shortTerm : longTerm;
 }
 
-/// "Toutes / Au mois / Courte durée" quick filter.
+/// "Toutes durées / Courte durée" quick filter.
 class RentalTypeChips extends StatelessWidget {
   const RentalTypeChips(
       {required this.value, required this.onChanged, super.key});
@@ -53,8 +53,6 @@ class RentalTypeChips extends StatelessWidget {
         );
     return Wrap(spacing: 8, runSpacing: 8, children: [
       chip(tr('Toutes durées'), null, Icons.all_inclusive),
-      chip(
-          RentalType.longTerm.label, RentalType.longTerm, Icons.calendar_month),
       chip(RentalType.shortTerm.label, RentalType.shortTerm, Icons.nights_stay),
     ]);
   }

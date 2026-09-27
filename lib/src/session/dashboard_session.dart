@@ -6,17 +6,23 @@ import '../api/graphql_client.dart';
 import '../api/notifications_poll.dart';
 import '../cache/dashboard_cache.dart';
 import '../config/app_config.dart';
+import '../filters/property_filters.dart';
+import '../models/property.dart';
+import '../models/rental_type.dart';
 import '../notifications/app_notification.dart';
 import '../notifications/system_notifications.dart';
 import 'session_store.dart';
 import '../i18n/tr.dart';
+import '../widgets/app_shell.dart';
+import '../widgets/property_search_bar.dart';
 
 /// Shared session, loading and polling logic for the apps' home pages.
 ///
 /// - keeps the bearer token in [sessionStore] so users stay signed in;
 /// - ignores responses that were overtaken by a newer request;
 /// - polls only notification ids and reloads the dashboard when they change;
-/// - caches only unfiltered dashboards, and clears everything on logout.
+/// - caches only unfiltered dashboards, and clears everything on logout;
+/// - holds the listing filters, the rental type being filtered server-side.
 mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
   GraphQLClient get client;
   DashboardCache get cache;
@@ -33,9 +39,9 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
   /// Whether the dashboard can only be loaded by a signed-in user.
   bool get requiresLogin;
 
-  /// Extra server-side filters (e.g. `rentalType`), sent with `$search`.
-  /// Null values mean "no filter".
-  Map<String, Object?> get extraQueryVariables => const {};
+  /// Server-side filters sent with `$search`; null values mean "no filter".
+  Map<String, Object?> get extraQueryVariables =>
+      {'rentalType': filters.rentalType?.apiValue};
 
   D parseDashboard(Map<String, dynamic> json);
   D demoDashboard();
@@ -62,6 +68,7 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
   DateTime? lastSynced;
   String? error;
   String searchQuery = '';
+  PropertyFilters filters = const PropertyFilters();
 
   Timer? _pollTimer;
   Timer? _searchDebounce;
@@ -241,6 +248,72 @@ mixin DashboardSession<W extends StatefulWidget, D> on State<W> {
       if (mounted) load(search: value);
     });
   }
+
+  /// Applies new filters, reloading when the rental type changes since the
+  /// backend filters on it.
+  void applyFilters(PropertyFilters next) {
+    final reload = next.rentalType != filters.rentalType;
+    setState(() => filters = next);
+    if (reload) load();
+  }
+
+  /// For the "Toutes durées / Courte durée" chips; null means every duration.
+  void setRentalType(RentalType? type) => applyFilters(type == null
+      ? filters.copyWith(clearRentalType: true)
+      : filters.copyWith(rentalType: type));
+
+  /// Opens the filter sheet, offering the categories found in [properties].
+  Future<void> openFilterSheet(Iterable<Property> properties,
+      {String? subtitle}) async {
+    final result = await showModalBottomSheet<PropertyFilters>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => PropertyFilterSheet(
+        initial: filters,
+        categories:
+            properties.map((property) => property.category).toSet().toList()
+              ..sort(),
+        subtitle: subtitle,
+      ),
+    );
+    if (result != null && mounted) applyFilters(result);
+  }
+
+  /// Search bar wired to [searchProperties] and the filter sheet.
+  PropertySearchBar listingSearchBar(Iterable<Property> properties,
+          {String? hintText, String? filterSubtitle}) =>
+      PropertySearchBar(
+        controller: propertySearch,
+        onChanged: searchProperties,
+        activeFilterCount: filters.activeCount,
+        onOpenFilters: () =>
+            openFilterSheet(properties, subtitle: filterSubtitle),
+        hintText: hintText,
+      );
+
+  /// Header showing this session's connection state and sync button.
+  AppHeader sessionHeader({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool collapsed,
+    PropertySearchBar? search,
+    String? refreshTooltip,
+  }) =>
+      AppHeader(
+        title: title,
+        subtitle: subtitle,
+        icon: icon,
+        connected: connected,
+        online: online,
+        connectedLabel: username.text.trim(),
+        loading: loading,
+        onRefresh: load,
+        refreshTooltip: refreshTooltip,
+        search: search,
+        collapsed: collapsed,
+      );
 
   Future<void> _poll() async {
     if (!mounted || !signedIn || loading || _polling) return;
